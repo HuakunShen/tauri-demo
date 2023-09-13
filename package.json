@@ -3,6 +3,8 @@
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
+    "@sveltejs/adapter-static": "^2.0.3",
+    "@tauri-apps/cli": "^1.4.0",
     "bun-types": "latest"
   },
   "peerDependencies": {
