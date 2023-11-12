@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+h2 {
+  @apply text-2xl font-bold text-gray-900;
+}
+button {
+  @apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded;
+}
+
+input {
+  @apply border;
+}
