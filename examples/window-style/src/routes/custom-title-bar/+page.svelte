@@ -5,7 +5,6 @@
 <div data-tauri-drag-region class="titlebar">
   <button
     class="titlebar-button"
-    id="titlebar-minimize"
     on:click={() => {
       appWindow.minimize();
     }}
@@ -17,7 +16,6 @@
   </button>
   <button
     class="titlebar-button"
-    id="titlebar-maximize"
     on:click={() => {
       appWindow.maximize();
     }}
@@ -29,7 +27,6 @@
   </button>
   <button
     class="titlebar-button"
-    id="titlebar-close"
     on:click={() => {
       appWindow.close();
     }}

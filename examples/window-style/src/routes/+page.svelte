@@ -15,9 +15,12 @@
     new WebviewWindow("overlay", {
       url: "overlay",
       titleBarStyle: "overlay",
+      hiddenTitle: true,
     });
-  }}>Overlay</button
+  }}
 >
+  Overlay
+</button>
 <button
   on:click={() => {
     new WebviewWindow("no-buttons", {
@@ -26,6 +29,7 @@
     });
   }}>No Buttons (no decorations)</button
 >
+
 <button
   on:click={() => {
     new WebviewWindow("no-buttons-rounded", {
