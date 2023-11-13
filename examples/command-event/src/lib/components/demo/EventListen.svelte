@@ -7,8 +7,7 @@
   let unlisten: UnlistenFn;
   let data: Event<number> | undefined;
   onMount(async () => {
-    unlisten = await listen("event_and_state_increment", (event: Event<number>) => {
-      console.log(event);
+    unlisten = await listen("event_and_state_increment_mut", (event: Event<number>) => {
       data = event;
     });
   });
@@ -22,6 +21,6 @@
 <pre>{JSON.stringify(data, null, 2)}</pre>
 <button
   on:click={() => {
-    invoke("event_and_state_increment");
-  }}>Call "event_and_state_increment" command to increment</button
+    invoke("event_and_state_increment_mut");
+  }}>Call "event_and_state_increment_mut" command to increment</button
 >

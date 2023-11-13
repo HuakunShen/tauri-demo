@@ -4,7 +4,7 @@
 
   let greetName = "";
   let greetRes = "";
-  $: invoke("greet", { name: greetName }).then((res) => {
+  $: invoke("greet", { firstName: greetName }).then((res) => {
     greetRes = z.string().parse(res);
   });
 </script>

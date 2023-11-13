@@ -2,13 +2,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use std::collections::HashMap;
 
-use serde_json::Number;
 use tauri::Manager;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+fn greet(first_name: &str) -> String {
+    format!("Hello, {}! You've been greeted from Rust!", first_name)
 }
 
 // custom data structure must be Deserialize as a parameter and Serialize as a return value
@@ -18,7 +17,8 @@ struct MyCustomData {
 }
 
 #[tauri::command]
-fn custom_payload(payload: MyCustomData) -> MyCustomData {
+fn custom_payload(mut payload: MyCustomData) -> MyCustomData {
+    payload.name = format!("Hello, {}! You've been greeted from Rust!", payload.name);
     payload
 }
 
@@ -40,28 +40,44 @@ fn window_label(window: tauri::Window) -> String {
     window.label().to_string()
 }
 
-
 #[derive(Default)]
-struct Counter {
+struct CounterMut {
     count: std::sync::Mutex<i32>,
 }
 #[tauri::command]
-fn event_and_state_increment(app_handle: tauri::AppHandle, count_state: tauri::State<'_, Counter>) {
-    // increment counter_state.count
+fn event_and_state_increment_mut(
+    app_handle: tauri::AppHandle,
+    count_state: tauri::State<'_, CounterMut>,
+) {
+    // https://doc.rust-lang.org/std/sync/struct.MutexGuard.html
+    // MuTexGuard impl DerefMut
     *count_state.count.lock().unwrap() += 1;
     let count = *count_state.count.lock().unwrap();
-    app_handle.emit_all("event_and_state_increment", count).unwrap();
+    app_handle
+        .emit_all("event_and_state_increment_mut", count)
+        .unwrap();
+}
+
+#[derive(Default)]
+struct Counter(i32);
+
+#[tauri::command]
+fn state(count_state: tauri::State<'_, Counter>) -> i32 {
+    // count_state.0 += 1;
+    count_state.0
 }
 
 fn main() {
     tauri::Builder::default()
-        .manage(Counter { count: 0.into() })
+        .manage(CounterMut { count: 0.into() })
+        .manage(Counter(0.into()))
         .invoke_handler(tauri::generate_handler![
             greet,
             custom_payload,
             my_ip,
             window_label,
-            event_and_state_increment
+            state,
+            event_and_state_increment_mut
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
