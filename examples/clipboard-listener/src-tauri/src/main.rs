@@ -59,11 +59,6 @@ fn main() {
             listen_to_clipboard,
             stop_clipboard_listener,
         ])
-        .setup(|app| {
-            let window = app.get_window("main").unwrap();
-            window.open_devtools();
-            Ok(())
-        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
