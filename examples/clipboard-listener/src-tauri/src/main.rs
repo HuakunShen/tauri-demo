@@ -28,16 +28,16 @@ fn listen_to_clipboard(
 
     std::thread::spawn(move || loop {
         let mut cb = clipboard.lock().unwrap();
-        let text = cb.get_text().unwrap();
-        let mut cur_content = content.lock().unwrap();
+        let cur_text = cb.get_text().unwrap();
+        let mut pre_text = content.lock().unwrap();
         if !*running.lock().unwrap() {
             println!("Clipboard Listener stopped running");
             let _ = window.emit("clipboard_listener_running", false);
             return;
         }
-        if text != *cur_content {
-            *cur_content = text.clone();
-            window.emit("clipboard-update", text).unwrap();
+        if cur_text != *pre_text {
+            *pre_text = cur_text.clone();
+            window.emit("clipboard-update", cur_text).unwrap();
         }
         std::thread::sleep(std::time::Duration::from_millis(delay_millis));
     });
