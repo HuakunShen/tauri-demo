@@ -1,6 +1,6 @@
-import { readDir, readTextFile } from "@tauri-apps/plugin-fs";
+import { exists, mkdir, readDir, readTextFile } from "@tauri-apps/plugin-fs";
 import { join, resourceDir } from "@tauri-apps/api/path";
-import { sqlite } from "./database";
+import { getDb } from "./database";
 
 export type ProxyMigrator = (migrationQueries: string[]) => Promise<void>;
 
@@ -11,8 +11,14 @@ export type ProxyMigrator = (migrationQueries: string[]) => Promise<void>;
  * @returns A promise that resolves when the migrations are complete.
  */
 export async function migrate() {
+  const sqlite = await getDb();
   const resourcePath = await resourceDir();
-  const files = await readDir(`${resourcePath}/migrations`);
+  const migrationsPath = await join(resourcePath, "migrations");
+  const _exists = await exists(migrationsPath);
+  if (!_exists) {
+    await mkdir(migrationsPath);
+  }
+  const files = await readDir(migrationsPath);
   let migrations = files.filter((file) => file.name?.endsWith(".sql"));
 
   // sort migrations by the first 4 characters of the file name
@@ -62,6 +68,6 @@ export async function migrate() {
   }
 
   console.info("Migrations complete");
-
+  await sqlite.close();
   return Promise.resolve();
 }
