@@ -1,47 +1,44 @@
 <script lang="ts">
-  import Database from "@tauri-apps/plugin-sql";
-  import { appConfigDir, join, resourceDir } from "@tauri-apps/api/path";
+  import { appConfigDir, join } from "@tauri-apps/api/path";
   import { onMount } from "svelte";
   import { openPath } from "@tauri-apps/plugin-opener";
-  import { writeText, readText } from "@tauri-apps/plugin-clipboard-manager";
-  import { readDir } from "@tauri-apps/plugin-fs";
+  import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+  import * as schema from "$lib/db/schema";
+  import { db } from "$lib/db/database";
+  import Inspect from "svelte-inspect-value";
 
   let appConfigPath = $state("");
   let dbPath = $state("");
+  let nameInput = $state("");
+  let users = $state<
+    { id: number; created_at: string | null; name: string | null }[]
+  >([]);
 
   onMount(async () => {
     const path = await appConfigDir();
     appConfigPath = path;
     dbPath = await join(path, "test.db");
+    loadUsers();
   });
 
-  const queries = {
-    createTables: `
-          CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL
-          );
-    `,
+  const loadUsers = async () => {
+    db.query.users
+      .findMany()
+      .execute()
+      .then((results) => {
+        console.log("🚀 ~ FindMany response from Drizzle:", results);
+        users = results;
+      });
   };
+
+  async function addUser() {
+    await db.insert(schema.users).values({ name: nameInput });
+    nameInput = "";
+    loadUsers();
+  }
 </script>
 
-<main class="container flex flex-col gap-4">
-  <button
-    type="button"
-    class="btn preset-filled"
-    onclick={async () => {
-      const db = await Database.load("sqlite:test.db");
-      const result = await db.execute(queries.createTables);
-      await db.close();
-      console.log(result);
-
-      const resourcePath = await resourceDir();
-      console.log("resourcePath", resourcePath);
-
-      const files = await readDir(`${resourcePath}/migrations`);
-      console.log("files", files);
-    }}>Init Sqlite</button
-  >
+<main class="container mx-auto flex flex-col gap-4">
   <div class="flex gap-2">
     <button
       class="font-mono text-sm text-blue-400 hover:text-blue-500 hover:underline cursor-pointer text-left"
@@ -67,4 +64,37 @@
       Copy
     </button>
   </div>
+
+  <form
+    onsubmit={(e) => {
+      e.preventDefault();
+      addUser();
+    }}
+  >
+    <label class="label">
+      <span class="label-text">Name</span>
+      <div class="flex gap-2">
+        <input
+          bind:value={nameInput}
+          class="input"
+          type="text"
+          placeholder="Enter a name..."
+        />
+        <button type="submit" class="btn preset-filled">
+          Add name to the db
+        </button>
+      </div>
+    </label>
+  </form>
+  <button
+    type="button"
+    class="btn preset-tonal-error"
+    onclick={async () => {
+      await db.delete(schema.users).execute();
+      loadUsers();
+    }}
+  >
+    Delete All Users
+  </button>
+  <Inspect value={users} />
 </main>

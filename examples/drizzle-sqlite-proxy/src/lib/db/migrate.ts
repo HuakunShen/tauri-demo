@@ -1,6 +1,5 @@
-import { exists, mkdir, readDir, readTextFile } from "@tauri-apps/plugin-fs";
-import { join, resourceDir } from "@tauri-apps/api/path";
 import { getDb } from "./database";
+import { migrations } from "./migrations";
 
 export type ProxyMigrator = (migrationQueries: string[]) => Promise<void>;
 
@@ -12,26 +11,6 @@ export type ProxyMigrator = (migrationQueries: string[]) => Promise<void>;
  */
 export async function migrate() {
   const sqlite = await getDb();
-  const resourcePath = await resourceDir();
-  const migrationsPath = await join(resourcePath, "migrations");
-  const _exists = await exists(migrationsPath);
-  if (!_exists) {
-    await mkdir(migrationsPath);
-  }
-  const files = await readDir(migrationsPath);
-  let migrations = files.filter((file) => file.name?.endsWith(".sql"));
-
-  // sort migrations by the first 4 characters of the file name
-  migrations = migrations.sort((a, b) => {
-    const aHash = a.name?.replace(".sql", "").slice(0, 4);
-    const bHash = b.name?.replace(".sql", "").slice(0, 4);
-
-    if (aHash && bHash) {
-      return aHash.localeCompare(bHash);
-    }
-
-    return 0;
-  });
 
   const migrationTableCreate = /*sql*/ `
 		CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
@@ -44,7 +23,7 @@ export async function migrate() {
   await sqlite.execute(migrationTableCreate, []);
 
   for (const migration of migrations) {
-    const hash = migration.name?.replace(".sql", "");
+    // const hash = migration.name?.replace(".sql", "");
 
     const dbMigrations = (await sqlite.select(
       /*sql*/ `SELECT id, hash, created_at FROM "__drizzle_migrations" ORDER BY created_at DESC`
@@ -55,14 +34,14 @@ export async function migrate() {
         return dbMigration?.hash === hash;
       });
 
-    if (hash && hasBeenRun(hash) === undefined) {
-      const filePath = await join(resourcePath, "migrations", migration.name);
-      const sql = await readTextFile(filePath);
+    if (hasBeenRun(migration.name) === undefined) {
+      // const filePath = await join(resourcePath, "migrations", migration.name);
+      // const sql = await readTextFile(filePath);
 
-      sqlite.execute(sql, []);
+      sqlite.execute(migration.sql, []);
       sqlite.execute(
         /*sql*/ `INSERT INTO "__drizzle_migrations" (hash, created_at) VALUES ($1, $2)`,
-        [hash, Date.now()]
+        [migration.name, Date.now()]
       );
     }
   }
