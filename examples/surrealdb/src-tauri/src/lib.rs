@@ -1,38 +1,36 @@
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
+use std::sync::Arc;
 use surrealdb::RecordId;
 use surrealdb::Surreal;
 use tauri::{Manager, State};
-use tokio::sync::Mutex as TokioMutex;
+use tokio::sync::Mutex;
 
 use surrealdb::engine::local::{Db, RocksDb};
 
 #[derive(Debug, Serialize)]
-struct Name {
-    first: String,
-    last: String,
-}
-
-#[derive(Debug, Serialize)]
 struct Person {
     title: String,
-    name: Name,
+    name: String,
     marketing: bool,
 }
 
-#[derive(Debug, Serialize)]
-struct Responsibility {
-    marketing: bool,
-}
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Record {
     #[allow(dead_code)]
     id: RecordId,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct PersonRecord {
+    #[allow(dead_code)]
+    id: RecordId,
+    title: String,
+    name: String,
+    marketing: bool,
+}
+
 pub struct Database {
-    db: TokioMutex<Surreal<Db>>,
+    db: Arc<Mutex<Surreal<Db>>>,
 }
 
 impl Database {
@@ -43,37 +41,46 @@ impl Database {
         db.use_ns("test").use_db("test").await?;
 
         Ok(Self {
-            db: TokioMutex::new(db),
+            db: Arc::new(Mutex::new(db)),
         })
     }
 
     pub async fn create_person(
         &self,
         title: String,
-        first_name: String,
-        last_name: String,
+        name: String,
     ) -> Result<Option<Record>, surrealdb::Error> {
         let db = self.db.lock().await;
-
-        let created: Option<Record> = db
+        println!("obtained db lock");
+        match db
             .create("person")
             .content(Person {
                 title,
-                name: Name {
-                    first: first_name,
-                    last: last_name,
-                },
+                name,
                 marketing: true,
             })
-            .await?;
-
-        Ok(created)
+            .await
+        {
+            Ok(created) => {
+                println!("created person");
+                Ok(created)
+            }
+            Err(e) => {
+                println!("error creating person: {}", e);
+                Err(e)
+            }
+        }
     }
 
-    pub async fn get_people(&self) -> Result<Vec<Record>, surrealdb::Error> {
+    pub async fn get_people(&self) -> Result<Vec<PersonRecord>, surrealdb::Error> {
         let db = self.db.lock().await;
-        let people: Vec<Record> = db.select("person").await?;
+        let people: Vec<PersonRecord> = db.select("person").await?;
         Ok(people)
+        // let groups = db
+        //     .query("SELECT marketing, count() FROM type::table($table) GROUP BY marketing")
+        //     .bind(("table", "person"))
+        //     .await?;
+        // Ok(groups)
     }
 }
 
@@ -87,21 +94,27 @@ fn greet(name: &str) -> String {
 async fn create_person(
     db: State<'_, Database>,
     title: String,
-    first_name: String,
-    last_name: String,
+    name: String,
 ) -> Result<String, String> {
-    db.create_person(title, first_name.clone(), last_name.clone())
+    println!("Creating person: {} {}", title, name);
+    db.create_person(title, name.clone())
         .await
-        .map(|_| format!("Created person: {} {}", first_name, last_name))
-        .map_err(|e| e.to_string())
+        .map(|_| format!("Created person: {}", name))
+        .map_err(|e| {
+            println!("Error creating person: {}", e);
+            e.to_string()
+        })
 }
 
 #[tauri::command]
-async fn get_people(db: State<'_, Database>) -> Result<String, String> {
-    db.get_people()
-        .await
-        .map(|people| format!("Found {} people", people.len()))
-        .map_err(|e| e.to_string())
+async fn get_people(db: State<'_, Database>) -> Result<Vec<PersonRecord>, String> {
+    match db.get_people().await {
+        Ok(people) => Ok(people),
+        Err(e) => {
+            println!("Error getting people: {}", e);
+            Err(e.to_string())
+        }
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -109,16 +122,21 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            // Initialize database
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            let db = rt.block_on(async {
-                Database::new()
+            let app_handle = app.handle();
+            tauri::async_runtime::block_on(async move {
+                let db = Database::new()
                     .await
-                    .expect("Failed to initialize database")
+                    .expect("Failed to initialize database");
+                app_handle.manage(db);
             });
 
             // Manage the database state
-            app.manage(db);
+            #[cfg(debug_assertions)]
+            {
+                // Open the developer tools in debug mode
+                let window = app.get_webview_window("main").unwrap();
+                window.open_devtools();
+            }
 
             Ok(())
         })
