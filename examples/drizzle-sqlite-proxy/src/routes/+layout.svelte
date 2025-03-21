@@ -6,7 +6,7 @@
   let { children } = $props();
 
   onMount(async () => {
-    await migrate();
+    // await migrate(); // Migrations are handled by the Tauri plugin in lib.rs, but this is here for reference
   });
 </script>
 
