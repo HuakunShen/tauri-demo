@@ -1,7 +1,7 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import Inspect from "svelte-inspect-value";
-  import { once, preventDefault } from "../lib/utils";
+  import { preventDefault } from "../lib/utils";
   import { onMount } from "svelte";
 
   let name = $state("");
