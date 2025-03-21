@@ -50,37 +50,44 @@ impl Database {
         title: String,
         name: String,
     ) -> Result<Option<Record>, surrealdb::Error> {
-        let db = self.db.lock().await;
-        println!("obtained db lock");
-        match db
-            .create("person")
-            .content(Person {
-                title,
-                name,
-                marketing: true,
-            })
-            .await
-        {
-            Ok(created) => {
-                println!("created person");
-                Ok(created)
-            }
-            Err(e) => {
-                println!("error creating person: {}", e);
-                Err(e)
-            }
-        }
+        let created = {
+            let db = self.db.lock().await;
+            let res = db
+                .create("person")
+                .content(Person {
+                    title,
+                    name,
+                    marketing: true,
+                })
+                .await?;
+            // Ensure the transaction is flushed
+            db.query("COMMIT TRANSACTION").await?;
+            res
+        };
+        Ok(created)
     }
 
     pub async fn get_people(&self) -> Result<Vec<PersonRecord>, surrealdb::Error> {
-        let db = self.db.lock().await;
-        let people: Vec<PersonRecord> = db.select("person").await?;
+        let people = {
+            let db = self.db.lock().await;
+            // Force a new transaction
+            db.query("BEGIN TRANSACTION").await?;
+            let result: Vec<PersonRecord> = db.query("SELECT * FROM person").await?.take(0)?;
+            // End transaction
+            db.query("COMMIT TRANSACTION").await?;
+            result
+        };
         Ok(people)
-        // let groups = db
-        //     .query("SELECT marketing, count() FROM type::table($table) GROUP BY marketing")
-        //     .bind(("table", "person"))
-        //     .await?;
-        // Ok(groups)
+    }
+
+    pub async fn delete_all_people(&self) -> Result<(), surrealdb::Error> {
+        {
+            let db = self.db.lock().await;
+            db.query("DELETE person").await?;
+            // Ensure the transaction is flushed
+            db.query("COMMIT TRANSACTION").await?;
+        };
+        Ok(())
     }
 }
 
@@ -96,24 +103,25 @@ async fn create_person(
     title: String,
     name: String,
 ) -> Result<String, String> {
-    println!("Creating person: {} {}", title, name);
     db.create_person(title, name.clone())
         .await
         .map(|_| format!("Created person: {}", name))
-        .map_err(|e| {
-            println!("Error creating person: {}", e);
-            e.to_string()
-        })
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 async fn get_people(db: State<'_, Database>) -> Result<Vec<PersonRecord>, String> {
     match db.get_people().await {
         Ok(people) => Ok(people),
-        Err(e) => {
-            println!("Error getting people: {}", e);
-            Err(e.to_string())
-        }
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+async fn delete_all_people(db: State<'_, Database>) -> Result<String, String> {
+    match db.delete_all_people().await {
+        Ok(_) => Ok("All people deleted successfully".to_string()),
+        Err(e) => Err(e.to_string()),
     }
 }
 
@@ -140,7 +148,12 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, create_person, get_people])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            create_person,
+            get_people,
+            delete_all_people
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

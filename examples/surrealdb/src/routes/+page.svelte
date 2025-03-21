@@ -14,25 +14,39 @@
   async function createPerson() {
     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
     await invoke("create_person", { name, title: "Developer" });
-    getPeople();
+    name = ""; // Reset the input
+    await getPeople(); // Make sure to refresh the people list
   }
 
   async function getPeople() {
     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    people = await invoke("get_people");
+    try {
+      people = await invoke("get_people");
+    } catch (error) {
+      console.error("Error getting people:", error);
+    }
+  }
+
+  async function deleteAllPeople() {
+    await invoke("delete_all_people");
+    await getPeople(); // Make sure to refresh the people list
   }
 </script>
 
 <main class="container mx-auto space-y-4 px-4">
   <h1 class="text-2xl font-bold">Welcome to Tauri + SurrealDB</h1>
 
-  <form class="row" onsubmit={once(preventDefault(createPerson))}>
+  <form class="row" onsubmit={preventDefault(createPerson)}>
     <input id="greet-input" placeholder="Enter a name..." bind:value={name} />
     <button type="submit">Create Person</button>
   </form>
 
-  <form class="row" onsubmit={once(preventDefault(getPeople))}>
+  <form class="row" onsubmit={preventDefault(getPeople)}>
     <button type="submit">Get People</button>
+  </form>
+
+  <form class="row" onsubmit={preventDefault(deleteAllPeople)}>
+    <button type="submit">Delete All People</button>
   </form>
   <Inspect expandAll={true} value={people} />
 </main>
