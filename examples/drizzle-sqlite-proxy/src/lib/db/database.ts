@@ -26,7 +26,9 @@ export const db = drizzle<typeof schema>(
     const sqlite = await getDb();
     let rows: any = [];
     let results = [];
-
+    console.log("sql", sql);
+    console.log("params", params);
+    console.log("method", method);
     // If the query is a SELECT, use the select method
     if (isSelectQuery(sql)) {
       rows = await sqlite.select(sql, params).catch((e) => {
@@ -41,6 +43,7 @@ export const db = drizzle<typeof schema>(
       });
       return { rows: [] };
     }
+    console.log("rows", rows);
 
     rows = rows.map((row: any) => {
       return Object.values(row);

@@ -28,3 +28,10 @@ But the size increase is honestly not considered as a big deal today, all the ap
 Electron apps are typically 200-400MB.
 
 But developers using Tauri may want a minimal app size. You can decide for yourself.
+
+## RAM
+
+- This main process of this SurrealDB example app uses consumes ~100MB of RAM.
+- [drizzle-sqlite-proxy](../drizzle-sqlite-proxy/) implements a similar example using the [tauri-plugin-sql](https://crates.io/crates/tauri-plugin-sql) plugin, and consumes ~30MB of RAM (main process).
+
+So 70MB difference. It's not a big deal for modern computers, but still a big difference.
