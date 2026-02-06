@@ -28,6 +28,186 @@
   flex-direction: column;
   justify-content: center;
   text-align: center;
+  gap: 1.5rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.text-gray-600 {
+  color: #4b5563;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.border {
+  border: 1px solid #e5e7eb;
+}
+
+.p-6 {
+  padding: 1.5rem;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.h-3 {
+  height: 0.75rem;
+}
+
+.w-3 {
+  width: 0.75rem;
+}
+
+.rounded-full {
+  border-radius: 9999px;
+}
+
+.bg-green-500 {
+  background-color: #22c55e;
+}
+
+.bg-red-500 {
+  background-color: #ef4444;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.max-w-md {
+  max-width: 28rem;
+}
+
+.bg-gray-100 {
+  background-color: #f3f4f6;
+}
+
+.p-4 {
+  padding: 1rem;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.mt-1 {
+  margin-top: 0.25rem;
+}
+
+.text-gray-500 {
+  color: #6b7280;
+}
+
+.list-inside {
+  list-style-position: inside;
+}
+
+.list-disc {
+  list-style-type: disc;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.bg-black {
+  background-color: #000;
+}
+
+.text-green-400 {
+  color: #4ade80;
+}
+
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.h-48 {
+  height: 12rem;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.text-blue-500 {
+  color: #3b82f6;
+}
+
+.hover\:text-blue-700:hover {
+  color: #1d4ed8;
+}
+
+.text-gray-400 {
+  color: #9ca3af;
+}
+
+.hover\:text-gray-600:hover {
+  color: #4b5563;
+}
+
+.border-gray-300 {
+  border-color: #d1d5db;
 }
 
 .logo {
