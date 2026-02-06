@@ -7,7 +7,13 @@ import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-  preprocess: vitePreprocess(),
+  preprocess: vitePreprocess({
+    script: true,
+    style: true,
+  }),
+  compilerOptions: {
+    css: "injected",
+  },
   kit: {
     adapter: adapter({
       fallback: "index.html",

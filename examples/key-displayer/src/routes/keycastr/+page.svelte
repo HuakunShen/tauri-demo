@@ -177,15 +177,9 @@
     align-items: center;
     justify-content: flex-start;
     box-sizing: border-box;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 12px;
+    background: #2d2d30;
     overflow: hidden;
     user-select: none;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.4),
-      0 2px 8px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
   .drag-handle {
