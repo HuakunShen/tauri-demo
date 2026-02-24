@@ -188,32 +188,62 @@ fn handle_text_selection(app_handle: AppHandle) {
             let (mut px, mut py) = (mouse_x + offset, mouse_y + offset);
 
             // Find which monitor the mouse is on and clamp to its edges
+            // Note: monio returns physical pixels, but Tauri window positioning
+            // on X11/Linux works best with logical coordinates scaled by monitor DPI
             if let Ok(monitors) = app_handle.available_monitors() {
                 for m in &monitors {
                     let scale = m.scale_factor();
-                    let mon_x = m.position().x as f64 / scale;
-                    let mon_y = m.position().y as f64 / scale;
-                    let mon_w = m.size().width as f64 / scale;
-                    let mon_h = m.size().height as f64 / scale;
+                    
+                    // Monitor bounds in physical pixels
+                    let mon_x_phys = m.position().x as f64;
+                    let mon_y_phys = m.position().y as f64;
+                    let mon_w_phys = m.size().width as f64;
+                    let mon_h_phys = m.size().height as f64;
+                    
+                    // Convert to logical coordinates for positioning
+                    let mon_x = mon_x_phys / scale;
+                    let mon_y = mon_y_phys / scale;
+                    let mon_w = mon_w_phys / scale;
+                    let mon_h = mon_h_phys / scale;
+                    
+                    // Platform-specific: convert mouse position to logical coordinates
+                    // Linux/Windows: monio returns physical pixels, need to divide by scale
+                    // macOS: monio returns logical points already, no conversion needed
+                    #[cfg(target_os = "macos")]
+                    let (mouse_x_logical, mouse_y_logical) = (mouse_x, mouse_y);
+                    #[cfg(not(target_os = "macos"))]
+                    let (mouse_x_logical, mouse_y_logical) = (mouse_x / scale, mouse_y / scale);
 
-                    let mouse_in_monitor = mouse_x >= mon_x
-                        && mouse_x < mon_x + mon_w
-                        && mouse_y >= mon_y
-                        && mouse_y < mon_y + mon_h;
+                    let mouse_in_monitor = mouse_x >= mon_x_phys
+                        && mouse_x < mon_x_phys + mon_w_phys
+                        && mouse_y >= mon_y_phys
+                        && mouse_y < mon_y_phys + mon_h_phys;
 
                     if mouse_in_monitor {
                         let mon_right = mon_x + mon_w;
                         let mon_bottom = mon_y + mon_h;
 
-                        if px + popup_w > mon_right {
-                            px = mouse_x - popup_w - offset;
+                        // Use logical mouse coordinates for positioning
+                        let mut popup_x = mouse_x_logical + offset;
+                        let mut popup_y = mouse_y_logical + offset;
+
+                        if popup_x + popup_w > mon_right {
+                            popup_x = mouse_x_logical - popup_w - offset;
                         }
-                        if py + popup_h > mon_bottom {
-                            py = mouse_y - popup_h - offset;
+                        if popup_y + popup_h > mon_bottom {
+                            popup_y = mouse_y_logical - popup_h - offset;
                         }
 
-                        px = px.max(mon_x).min(mon_right - popup_w);
-                        py = py.max(mon_y).min(mon_bottom - popup_h);
+                        px = popup_x.max(mon_x).min(mon_right - popup_w);
+                        py = popup_y.max(mon_y).min(mon_bottom - popup_h);
+                        
+                        emit_debug(
+                            &app_handle,
+                            format!(
+                                "Monitor scale={}, logical mouse=({:.0},{:.0}), logical bounds=({:.0},{:.0},{:.0},{:.0})",
+                                scale, mouse_x_logical, mouse_y_logical, mon_x, mon_y, mon_w, mon_h
+                            ),
+                        );
                         break;
                     }
                 }

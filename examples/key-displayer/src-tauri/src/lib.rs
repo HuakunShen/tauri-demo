@@ -1,6 +1,6 @@
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 #[derive(Clone, serde::Serialize)]
 struct KeyEvent {
@@ -31,6 +31,35 @@ impl AppState {
 fn get_key_name(key: monio::Key) -> String {
     use monio::Key;
     match key {
+        // Letters - just return the letter
+        Key::KeyA => "A".to_string(),
+        Key::KeyB => "B".to_string(),
+        Key::KeyC => "C".to_string(),
+        Key::KeyD => "D".to_string(),
+        Key::KeyE => "E".to_string(),
+        Key::KeyF => "F".to_string(),
+        Key::KeyG => "G".to_string(),
+        Key::KeyH => "H".to_string(),
+        Key::KeyI => "I".to_string(),
+        Key::KeyJ => "J".to_string(),
+        Key::KeyK => "K".to_string(),
+        Key::KeyL => "L".to_string(),
+        Key::KeyM => "M".to_string(),
+        Key::KeyN => "N".to_string(),
+        Key::KeyO => "O".to_string(),
+        Key::KeyP => "P".to_string(),
+        Key::KeyQ => "Q".to_string(),
+        Key::KeyR => "R".to_string(),
+        Key::KeyS => "S".to_string(),
+        Key::KeyT => "T".to_string(),
+        Key::KeyU => "U".to_string(),
+        Key::KeyV => "V".to_string(),
+        Key::KeyW => "W".to_string(),
+        Key::KeyX => "X".to_string(),
+        Key::KeyY => "Y".to_string(),
+        Key::KeyZ => "Z".to_string(),
+        // Numbers - handle via fallback
+        // Special keys
         Key::Escape => "Esc".to_string(),
         Key::Backspace => "⌫".to_string(),
         Key::Tab => "Tab".to_string(),
@@ -63,7 +92,18 @@ fn get_key_name(key: monio::Key) -> String {
         Key::F10 => "F10".to_string(),
         Key::F11 => "F11".to_string(),
         Key::F12 => "F12".to_string(),
-        _ => format!("{:?}", key),
+        // Punctuation and other keys
+        _ => {
+            let s = format!("{:?}", key);
+            // Strip common prefixes
+            if s.starts_with("Key") {
+                s[3..].to_string()
+            } else if s.starts_with("Digit") {
+                s[5..].to_string()
+            } else {
+                s
+            }
+        }
     }
 }
 
@@ -265,6 +305,13 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(AppState::new())
+        .setup(|app| {
+            // Ensure keycastr window is always on top
+            if let Some(window) = app.get_webview_window("keycastr") {
+                let _ = window.set_always_on_top(true);
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             greet,
             start_monitoring,

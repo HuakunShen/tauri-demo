@@ -3,7 +3,9 @@
 > Research report documenting a proof-of-concept for detecting global text selection and showing a floating popup menu near the mouse cursor, implemented as a Tauri v2 desktop application.
 
 **Date**: 2026-02-06
-**Platform tested**: macOS (Apple Silicon), dual monitor setup at 2x scale
+**Platform tested**: 
+- macOS (Apple Silicon), dual monitor setup at 2x scale
+- Ubuntu 24.04 (X11), single monitor with DPI scaling
 **Status**: Working POC
 
 ---
@@ -737,6 +739,50 @@ The monitor is 3024x1964 physical pixels at scale=2, so 1512x982 logical points.
 
 ---
 
+### Bug 10: Linux X11 Coordinate System Mismatch
+
+**Symptom (Ubuntu 24 X11)**: Popup appears at wrong location, significantly offset from the actual mouse cursor position. The offset is proportional to the display's DPI scale factor.
+
+**Root cause**: Platform differences in how `monio` reports mouse coordinates:
+- **macOS**: `monio` returns logical "points" (already scaled by DPI)
+- **Linux X11**: `monio` returns raw **physical pixels** (unscaled)
+
+The original code compared physical mouse coordinates against monitor bounds that were converted to logical coordinates (divided by scale factor), causing a coordinate system mismatch on Linux.
+
+**Debug data (Ubuntu 24, 1.5x scale):**
+```
+Tauri monitor: pos=(0,0), size=2560x1440, scale=1.5
+monio mouse_position: (1920, 1080)  // Physical pixels
+Expected logical position: (1280, 720)  // After dividing by 1.5
+```
+
+**Fix**: Platform-specific coordinate conversion using Rust's conditional compilation:
+
+```rust
+// Platform-specific: convert mouse position to logical coordinates
+#[cfg(target_os = "macos")]
+let (mouse_x_logical, mouse_y_logical) = (mouse_x, mouse_y);
+#[cfg(not(target_os = "macos"))]
+let (mouse_x_logical, mouse_y_logical) = (mouse_x / scale, mouse_y / scale);
+```
+
+The complete fix involves:
+1. **Check mouse position using physical coordinates** against monitor physical bounds
+2. **Convert mouse to logical** using platform-specific rules (macOS: no-op, Linux/Windows: divide by scale)
+3. **Use logical coordinates** for Tauri window positioning with `LogicalPosition`
+
+**Platform coordinate behavior:**
+
+| Platform | monio Returns | Conversion to Logical |
+|----------|---------------|----------------------|
+| **macOS** | Logical points | `mouse_x` (no change) |
+| **Linux X11** | Physical pixels | `mouse_x / scale` |
+| **Windows** | Physical pixels | `mouse_x / scale` |
+
+This fix ensures correct popup positioning across macOS and Linux without breaking existing macOS functionality.
+
+---
+
 ## 5. Key Technical Decisions
 
 ### Decision 1: Create popup from Rust, not JavaScript
@@ -783,7 +829,9 @@ The OS needs a brief moment to finalize the text selection. Without this delay, 
 - Debug logging is verbose (should be removed or gated for production)
 - Only detects drag-based selection. Does not detect double-click word selection or keyboard-based selection (Shift+Arrow).
 - Translate/Summarize buttons emit events but don't do anything yet
-- macOS only tested. Windows/Linux not verified.
+- macOS tested (Apple Silicon, dual monitor)
+- Linux tested (Ubuntu 24.04 X11, single monitor)
+- Windows not tested
 - Requires Accessibility permissions on macOS (System Settings > Privacy & Security > Accessibility)
 - Selected text is passed to popup via URL query parameter, which has length limits for very long selections
 
@@ -795,7 +843,7 @@ The OS needs a brief moment to finalize the text selection. Without this delay, 
 2. Gate debug logging behind a feature flag or dev mode check
 3. Add actual translate/summarize functionality (e.g., call an LLM API)
 4. Handle double-click word selection and keyboard selection
-5. Test on Windows and Linux
+5. Test on Windows
 6. Consider a system tray icon instead of a full main window
 7. Use Tauri's managed state or IPC instead of URL query params for passing text to popup
 8. Add animation/transition to popup appearance

@@ -6,7 +6,7 @@ compatibility: opencode
 metadata:
   category: desktop-development
   stack: tauri-v2, rust, react, monio, selection-crate
-  platforms: macos (tested), windows, linux (untested)
+  platforms: macos (tested), linux (tested on Ubuntu 24 X11), windows (untested)
   difficulty: intermediate
 ---
 
@@ -504,6 +504,97 @@ body {
 **Root Cause:** `monio` returns macOS "points" (logical coordinates). Using `PhysicalPosition` causes Tauri to interpret them as raw pixels, dividing by the scale factor.
 
 **Solution:** Always use `LogicalPosition::new(mouse_x, mouse_y)` with monio coordinates. Never `PhysicalPosition`.
+
+---
+
+### Bug 6: Linux X11 Coordinate System Mismatch (Physical vs Logical Pixels)
+
+**Symptom (Linux X11):** Popup appears at wrong location, far from the actual mouse cursor, especially on displays with DPI scaling > 1x.
+
+**Root Cause:** Platform differences in coordinate systems:
+- **macOS**: `monio` returns logical "points" (already scaled)
+- **Linux X11**: `monio` returns raw **physical pixels** (unscaled)
+
+The original code compared physical mouse coordinates against monitor bounds converted to logical coordinates (divided by scale factor), causing a mismatch.
+
+**Solution:** Platform-specific coordinate conversion using `#[cfg(target_os = ...)]`:
+
+```rust
+// Platform-specific: convert mouse position to logical coordinates
+// Linux/Windows: monio returns physical pixels, need to divide by scale
+// macOS: monio returns logical points already, no conversion needed
+#[cfg(target_os = "macos")]
+let (mouse_x_logical, mouse_y_logical) = (mouse_x, mouse_y);
+#[cfg(not(target_os = "macos"))]
+let (mouse_x_logical, mouse_y_logical) = (mouse_x / scale, mouse_y / scale);
+```
+
+**Full monitor detection logic with platform fix:**
+
+```rust
+// Find which monitor the mouse is on and clamp to its edges
+// Note: monio returns physical pixels on Linux/Windows, but logical on macOS
+if let Ok(monitors) = app_handle.available_monitors() {
+    for m in &monitors {
+        let scale = m.scale_factor();
+        
+        // Monitor bounds in physical pixels
+        let mon_x_phys = m.position().x as f64;
+        let mon_y_phys = m.position().y as f64;
+        let mon_w_phys = m.size().width as f64;
+        let mon_h_phys = m.size().height as f64;
+        
+        // Convert to logical coordinates for positioning
+        let mon_x = mon_x_phys / scale;
+        let mon_y = mon_y_phys / scale;
+        let mon_w = mon_w_phys / scale;
+        let mon_h = mon_h_phys / scale;
+        
+        // Platform-specific mouse coordinate conversion
+        #[cfg(target_os = "macos")]
+        let (mouse_x_logical, mouse_y_logical) = (mouse_x, mouse_y);
+        #[cfg(not(target_os = "macos"))]
+        let (mouse_x_logical, mouse_y_logical) = (mouse_x / scale, mouse_y / scale);
+
+        // Check if mouse is in this monitor (using physical coordinates)
+        let mouse_in_monitor = mouse_x >= mon_x_phys
+            && mouse_x < mon_x_phys + mon_w_phys
+            && mouse_y >= mon_y_phys
+            && mouse_y < mon_y_phys + mon_h_phys;
+
+        if mouse_in_monitor {
+            // Use logical coordinates for popup positioning
+            let mon_right = mon_x + mon_w;
+            let mon_bottom = mon_y + mon_h;
+            
+            let mut popup_x = mouse_x_logical + offset;
+            let mut popup_y = mouse_y_logical + offset;
+
+            if popup_x + popup_w > mon_right {
+                popup_x = mouse_x_logical - popup_w - offset;
+            }
+            if popup_y + popup_h > mon_bottom {
+                popup_y = mouse_y_logical - popup_h - offset;
+            }
+
+            px = popup_x.max(mon_x).min(mon_right - popup_w);
+            py = popup_y.max(mon_y).min(mon_bottom - popup_h);
+            break;
+        }
+    }
+}
+
+let logical_pos = LogicalPosition::new(px, py);
+let _ = win.set_position(tauri::Position::Logical(logical_pos));
+```
+
+**Platform Summary:**
+
+| Platform | monio Returns | Conversion Needed |
+|----------|---------------|-------------------|
+| **macOS** | Logical points (scaled) | No conversion |
+| **Linux X11** | Physical pixels (unscaled) | Divide by scale factor |
+| **Windows** | Physical pixels (unscaled) | Divide by scale factor |
 
 ### Bug 2: Popup Toggle Instead of Always Showing
 

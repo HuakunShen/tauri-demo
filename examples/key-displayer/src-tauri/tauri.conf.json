@@ -25,18 +25,14 @@
         "width": 500,
         "height": 160,
         "visible": true,
-        "transparent": true,
+        "transparent": false,
         "decorations": false,
         "alwaysOnTop": true,
         "skipTaskbar": true,
         "resizable": false,
         "center": false,
         "x": 440,
-        "y": 600,
-        "windowEffects": {
-          "effects": ["popover"],
-          "state": "active"
-        }
+        "y": 600
       }
     ],
     "security": {
