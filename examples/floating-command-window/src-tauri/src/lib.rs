@@ -79,9 +79,9 @@ pub fn run() {
                     if event.state == ShortcutState::Pressed {
                         if let Ok(panel) = app.get_webview_panel("main") {
                             if panel.is_visible() {
-                                hide_spotlight(&app.app_handle().clone());
+                                hide_spotlight(app);
                             } else {
-                                show_spotlight(&app.app_handle().clone());
+                                show_spotlight(app);
                             }
                         }
                     }
