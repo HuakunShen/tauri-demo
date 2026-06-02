@@ -1,14 +1,13 @@
-# Tauri Floating Window
+# Tauri Floating NSPanel Window
 
-A Raycast-style floating spotlight window implementation using Tauri v2 + Svelte.
+A Raycast-style floating spotlight panel implementation using Tauri v2 + Svelte + macOS `NSPanel`.
 
 ## Features
 
-- **Floating Window**: No dock icon, no alt-tab visibility, always on top
+- **Floating NSPanel**: Non-activating macOS panel that does not steal focus from the current app
 - **Global Shortcut**: Cmd+Shift+H to toggle window visibility
 - **System Tray**: Menu bar icon with Show/Quit options
 - **Blurry Background**: Native macOS vibrancy/blur effects
-- **Pin/Unpin**: Keep window open on blur
 - **Draggable**: Drag window by the search icon
 - **Command Palette**: Searchable command list with keyboard navigation
 
@@ -56,6 +55,25 @@ A Raycast-style floating spotlight window implementation using Tauri v2 + Svelte
 }
 ```
 
+#### NSPanel Setup
+```rust
+use tauri_nspanel::{tauri_panel, ManagerExt, WebviewWindowExt};
+
+tauri_panel! {
+    panel!(SpotlightPanel {
+        config: {
+            can_become_key_window: true,
+            can_become_main_window: false,
+            is_floating_panel: true,
+            becomes_key_only_if_needed: true,
+        }
+    })
+}
+
+let window = app.get_webview_window("main").unwrap();
+let _panel = window.to_panel::<SpotlightPanel>().unwrap();
+```
+
 #### Global Shortcut Registration
 ```rust
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
@@ -66,10 +84,17 @@ let shortcut = Shortcut::new(
     tauri_plugin_global_shortcut::Code::KeyH
 );
 
+let app_handle = app.handle().clone();
 app.global_shortcut()
     .on_shortcut(shortcut, move |_app, _shortcut, event| {
         if event.state == ShortcutState::Pressed {
-            // Toggle window visibility
+            if let Ok(panel) = app_handle.get_webview_panel("main") {
+                if panel.is_visible() {
+                    hide_spotlight(&app_handle);
+                } else {
+                    show_spotlight(&app_handle);
+                }
+            }
         }
     })?;
 ```
@@ -95,9 +120,23 @@ let _ = TrayIconBuilder::with_id("tray")
     .build(app)?;
 ```
 
-#### Auto-focus Input on Show
+#### Show/Hide Helpers
 ```rust
-window.eval("document.querySelector('.spotlight-input')?.focus()").ok();
+fn show_spotlight(app: &AppHandle) {
+    if let Ok(panel) = app.get_webview_panel("main") {
+        panel.show_and_make_key();
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.center();
+            let _ = window.eval("document.querySelector('.spotlight-input')?.focus()");
+        }
+    }
+}
+
+fn hide_spotlight(app: &AppHandle) {
+    if let Ok(panel) = app.get_webview_panel("main") {
+        panel.hide();
+    }
+}
 ```
 
 ### 3. Frontend (`src/routes/+page.svelte`)
@@ -110,19 +149,13 @@ Add `data-tauri-drag-region` attribute to draggable elements:
     <svg class="search-icon" data-tauri-drag-region>...</svg>
 ```
 
-#### Pin/Unpin Feature
-```typescript
-let isPinned = $state(false)
+#### NSPanel Focus Caveat
+Do not use the search input's `blur` event as the default hide trigger in NSPanel mode. A non-activating panel can briefly blur while becoming key, which makes the panel flash: show, immediately hide, then show again.
 
-function handleBlur(e: FocusEvent) {
-  if (isPinned) return
-  // Only hide if not pinned
-  const relatedTarget = e.relatedTarget as HTMLElement | null
-  if (!relatedTarget || !document.contains(relatedTarget)) {
-    invoke("hide_window")
-  }
-}
-```
+Use explicit hide paths instead:
+- Cmd+Shift+H toggles the panel
+- Escape hides the panel
+- Selecting a command hides the panel
 
 #### Keyboard Navigation
 ```typescript
@@ -166,6 +199,7 @@ onMount(() => {
 tauri = { version = "2", features = ["tray-icon", "macos-private-api"] }
 tauri-plugin-opener = "2"
 tauri-plugin-global-shortcut = "2"
+tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }
 ```
 
 ## File Structure
@@ -206,12 +240,15 @@ Available effects: `popover`, `menu`, `hudWindow`, `contentBackground`, `headerV
 ```
 
 ### Focus Management
-When showing window via shortcut or tray, explicitly focus the input:
+When showing the panel via shortcut or tray, use `show_and_make_key()` and then focus the input through the regular Tauri window handle:
 ```rust
-window.show();
-window.set_focus();
-window.eval("document.querySelector('.spotlight-input')?.focus()").ok();
+panel.show_and_make_key();
+if let Some(window) = app.get_webview_window("main") {
+    let _ = window.eval("document.querySelector('.spotlight-input')?.focus()");
+}
 ```
+
+Do **not** call `panel.to_window()` during normal show/focus flow. In `tauri-nspanel`, `to_window()` converts the panel back to a regular window. Calling it after startup makes later `get_webview_panel("main")` lookups fail.
 
 ### Tray Icon
 The tray icon uses the app icon by default:
@@ -233,3 +270,4 @@ pnpm tauri dev
 - [Tauri System Tray](https://v2.tauri.app/learn/system-tray)
 - [Tauri Global Shortcut](https://v2.tauri.app/plugin/global-shortcut)
 - [Tauri macOS Private API](https://v2.tauri.app/reference/config/#macosprivateapi)
+- [tauri-nspanel](https://github.com/ahkohd/tauri-nspanel)

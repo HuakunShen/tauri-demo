@@ -30,8 +30,8 @@ fn hide_window(app: AppHandle) {
 
 fn show_spotlight(app: &AppHandle) {
     if let Ok(panel) = app.get_webview_panel("main") {
-        let _ = panel.show_and_make_key();
-        if let Some(window) = panel.to_window() {
+        panel.show_and_make_key();
+        if let Some(window) = app.get_webview_window("main") {
             let _ = window.center();
             let _ = window.eval("document.querySelector('.spotlight-input')?.focus()");
         }
@@ -40,7 +40,7 @@ fn show_spotlight(app: &AppHandle) {
 
 fn hide_spotlight(app: &AppHandle) {
     if let Ok(panel) = app.get_webview_panel("main") {
-        let _ = panel.hide();
+        panel.hide();
     }
 }
 
@@ -65,7 +65,7 @@ pub fn run() {
                 app.set_activation_policy(tauri::ActivationPolicy::Accessory);
             }
 
-            // Register global shortcut Cmd+Shift+Space
+            // Register global shortcut Cmd+Shift+H
             let shortcut = Shortcut::new(
                 Some(
                     tauri_plugin_global_shortcut::Modifiers::META
@@ -74,14 +74,15 @@ pub fn run() {
                 tauri_plugin_global_shortcut::Code::KeyH,
             );
 
+            let app_handle = app.handle().clone();
             app.global_shortcut()
-                .on_shortcut(shortcut, move |app, _shortcut, event| {
+                .on_shortcut(shortcut, move |_app, _shortcut, event| {
                     if event.state == ShortcutState::Pressed {
-                        if let Ok(panel) = app.get_webview_panel("main") {
+                        if let Ok(panel) = app_handle.get_webview_panel("main") {
                             if panel.is_visible() {
-                                hide_spotlight(app);
+                                hide_spotlight(&app_handle);
                             } else {
-                                show_spotlight(app);
+                                show_spotlight(&app_handle);
                             }
                         }
                     }

@@ -88,17 +88,6 @@
     invoke("hide_window")
   }
 
-  function handleBlur(e: FocusEvent) {
-    // Don't hide if window is pinned
-    if (isPinned) return
-    
-    // Only hide if the new focused element is outside the window
-    const relatedTarget = e.relatedTarget as HTMLElement | null
-    if (!relatedTarget || !document.contains(relatedTarget)) {
-      invoke("hide_window")
-    }
-  }
-
   function clearInput() {
     inputValue = ""
     selectedIndex = 0
@@ -120,7 +109,6 @@
         type="text"
         placeholder="Search commands...  (⌘+Shift+H)"
         class="spotlight-input"
-        onblur={handleBlur}
       />
       {#if isPinned}
         <span class="pin-indicator">📌</span>
