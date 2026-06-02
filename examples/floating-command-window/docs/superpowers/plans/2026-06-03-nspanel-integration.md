@@ -184,21 +184,26 @@ Insert these two functions immediately above `#[cfg_attr(mobile, tauri::mobile_e
 
 ```rust
 fn show_spotlight(app: &AppHandle) {
-    if let Some(panel) = app.get_webview_panel("main") {
+    if let Ok(panel) = app.get_webview_panel("main") {
         let _ = panel.show_and_make_key();
-        let _ = panel.center();
         if let Some(window) = panel.to_window() {
+            let _ = window.center();
             let _ = window.eval("document.querySelector('.spotlight-input')?.focus()");
         }
     }
 }
 
 fn hide_spotlight(app: &AppHandle) {
-    if let Some(panel) = app.get_webview_panel("main") {
+    if let Ok(panel) = app.get_webview_panel("main") {
         let _ = panel.hide();
     }
 }
 ```
+
+Notes:
+- `get_webview_panel` returns `Result`, not `Option`. The lookup is expected to succeed because we converted the window in setup, but we silently no-op on miss to match the existing project's defensive style (`is_visible().unwrap_or(false)` etc.).
+- `center()` is a `WebviewWindow` method, not a `Panel` method, so it goes on the `window` from `panel.to_window()`.
+- The order is `show_and_make_key` first, then `center`, then focus the input.
 
 - [ ] **Step 2: Convert the window in setup**
 
