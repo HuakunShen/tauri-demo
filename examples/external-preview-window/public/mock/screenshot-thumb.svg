@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="120" viewBox="0 0 160 120" role="img" aria-labelledby="title">
+  <title id="title">Mock screenshot thumbnail</title>
+  <rect width="160" height="120" fill="#121827"/>
+  <rect x="9" y="10" width="142" height="100" rx="10" fill="#f7f8fb"/>
+  <rect x="9" y="10" width="142" height="18" rx="10" fill="#253044"/>
+  <rect x="18" y="41" width="38" height="58" rx="5" fill="#ffffff" stroke="#dfe5ee"/>
+  <rect x="66" y="41" width="78" height="31" rx="6" fill="#ffffff" stroke="#dfe5ee"/>
+  <rect x="66" y="80" width="35" height="19" rx="6" fill="#ffffff" stroke="#dfe5ee"/>
+  <rect x="109" y="80" width="35" height="19" rx="6" fill="#ffffff" stroke="#dfe5ee"/>
+  <path d="M73 63 C82 46 95 44 105 54 C113 63 111 70 104 72 L73 72 Z" fill="#4f7cff"/>
+  <polyline points="70,96 77,90 84,93 93,84 101,91" fill="none" stroke="#14a878" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

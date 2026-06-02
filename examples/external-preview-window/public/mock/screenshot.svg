@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1133" height="711" viewBox="0 0 1133 711" role="img" aria-labelledby="title desc">
+  <title id="title">Mock dashboard screenshot</title>
+  <desc id="desc">A stylized application dashboard used as a clipboard image preview mock.</desc>
+  <rect width="1133" height="711" fill="#111827"/>
+  <rect x="34" y="34" width="1065" height="643" rx="28" fill="#f7f8fb"/>
+  <rect x="34" y="34" width="1065" height="74" rx="28" fill="#253044"/>
+  <circle cx="82" cy="71" r="11" fill="#ff6b6b"/>
+  <circle cx="118" cy="71" r="11" fill="#f5b84b"/>
+  <circle cx="154" cy="71" r="11" fill="#2fc88f"/>
+  <rect x="76" y="154" width="228" height="460" rx="18" fill="#ffffff" stroke="#e4e8ef"/>
+  <rect x="94" y="181" width="120" height="14" rx="7" fill="#273449"/>
+  <rect x="94" y="221" width="182" height="42" rx="12" fill="#edf3ff"/>
+  <rect x="94" y="281" width="160" height="42" rx="12" fill="#eefaf5"/>
+  <rect x="94" y="341" width="190" height="42" rx="12" fill="#fff3e4"/>
+  <rect x="94" y="401" width="142" height="42" rx="12" fill="#f3efff"/>
+  <rect x="94" y="461" width="174" height="42" rx="12" fill="#f4f6f9"/>
+  <rect x="346" y="154" width="693" height="182" rx="22" fill="#ffffff" stroke="#e4e8ef"/>
+  <rect x="376" y="185" width="210" height="20" rx="10" fill="#273449"/>
+  <rect x="376" y="229" width="472" height="16" rx="8" fill="#a9b3c3"/>
+  <rect x="376" y="260" width="388" height="16" rx="8" fill="#c4ccd8"/>
+  <rect x="376" y="291" width="512" height="16" rx="8" fill="#dde3eb"/>
+  <path d="M887 286 C916 223 967 204 1011 244 C1047 277 1037 321 1007 336 L887 336 Z" fill="#4f7cff" opacity="0.88"/>
+  <rect x="346" y="374" width="323" height="240" rx="22" fill="#ffffff" stroke="#e4e8ef"/>
+  <rect x="704" y="374" width="335" height="240" rx="22" fill="#ffffff" stroke="#e4e8ef"/>
+  <polyline points="384,548 436,492 486,516 548,450 626,494" fill="none" stroke="#14a878" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="738" y="416" width="218" height="18" rx="9" fill="#273449"/>
+  <rect x="738" y="465" width="252" height="14" rx="7" fill="#b6c0ce"/>
+  <rect x="738" y="501" width="188" height="14" rx="7" fill="#d3dae4"/>
+  <rect x="738" y="537" width="230" height="14" rx="7" fill="#e4e8ef"/>
+</svg>

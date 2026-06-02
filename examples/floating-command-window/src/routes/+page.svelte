@@ -118,7 +118,7 @@
         bind:this={inputRef}
         bind:value={inputValue}
         type="text"
-        placeholder="Search commands..."
+        placeholder="Search commands...  (⌘+Shift+H)"
         class="spotlight-input"
         onblur={handleBlur}
       />

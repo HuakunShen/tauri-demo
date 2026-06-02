@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default capabilities for the clipboard preview windows",
+  "windows": ["history", "preview"],
+  "permissions": [
+    "core:default",
+    "opener:default"
+  ]
+}

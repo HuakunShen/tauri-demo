@@ -1,0 +1,62 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "external-preview-window",
+  "version": "0.1.0",
+  "identifier": "com.hk.external-preview-window",
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "history",
+        "title": "Clipboard History",
+        "url": "index.html#/history",
+        "width": 420,
+        "height": 680,
+        "decorations": false,
+        "resizable": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": true,
+        "visible": true,
+        "focus": true
+      },
+      {
+        "label": "preview",
+        "title": "Clipboard Preview",
+        "url": "index.html#/preview",
+        "width": 716,
+        "height": 680,
+        "decorations": false,
+        "resizable": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": false,
+        "visible": false,
+        "focus": false,
+        "focusable": false
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "macOSPrivateApi": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}
