@@ -106,14 +106,14 @@ with:
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager,
+    AppHandle, Manager, Runtime,
 };
 use tauri_nspanel::{tauri_panel, ManagerExt, WebviewWindowExt};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 ```
 
 Notes:
-- `Runtime` was only used in the `hide_window` command signature. It will be removed in Task 5.
+- `Runtime` is kept for now because `hide_window` still uses it. It will be removed in Task 5 when the command is simplified to take `AppHandle` instead of `tauri::Window<R>`.
 - `AppHandle` is added now because it will be needed by the helpers in Task 3.
 - `ManagerExt` and `WebviewWindowExt` come from `tauri-nspanel` and provide `get_webview_panel` and `to_panel`.
 
@@ -162,7 +162,7 @@ Run:
 cd src-tauri && cargo check
 ```
 
-Expected: `Finished` with no errors. If you see "method `to_panel` not found" or similar, the `WebviewWindowExt` import is missing — re-check Step 1.
+Expected: `Finished` with no errors. Two `dead_code` warnings about `AppHandle` and `WebviewWindowExt` being unused are expected — both will be used in Task 3. If you see "method `to_panel` not found" or similar, the `WebviewWindowExt` import is missing — re-check Step 1.
 
 - [ ] **Step 5: Commit**
 
