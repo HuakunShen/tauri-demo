@@ -1,9 +1,21 @@
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, Runtime,
+    AppHandle, Manager, Runtime,
 };
+use tauri_nspanel::{tauri_panel, ManagerExt, WebviewWindowExt};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
+
+tauri_panel! {
+    panel!(SpotlightPanel {
+        config: {
+            can_become_key_window: true,
+            can_become_main_window: false,
+            is_floating_panel: true,
+            becomes_key_only_if_needed: true,
+        }
+    })
+}
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -21,6 +33,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_nspanel::init())
         .setup(|app| {
             // Get the main window
             let window = app.get_webview_window("main").unwrap();
