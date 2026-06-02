@@ -28,6 +28,22 @@ fn hide_window<R: Runtime>(window: tauri::Window<R>) {
     let _ = window.hide();
 }
 
+fn show_spotlight(app: &AppHandle) {
+    if let Ok(panel) = app.get_webview_panel("main") {
+        let _ = panel.show_and_make_key();
+        if let Some(window) = panel.to_window() {
+            let _ = window.center();
+            let _ = window.eval("document.querySelector('.spotlight-input')?.focus()");
+        }
+    }
+}
+
+fn hide_spotlight(app: &AppHandle) {
+    if let Ok(panel) = app.get_webview_panel("main") {
+        let _ = panel.hide();
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -35,18 +51,13 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_nspanel::init())
         .setup(|app| {
-            // Get the main window
+            // Convert the main window into an NSPanel subclass so it can show
+            // and accept keyboard input without activating the host app.
             let window = app.get_webview_window("main").unwrap();
+            let _panel = window.to_panel::<SpotlightPanel>().unwrap();
 
-            // Show and focus the window on startup
-            let _ = window.show();
-            let _ = window.set_focus();
-            let _ = window.center();
-
-            // Focus the input element
-            window
-                .eval("document.querySelector('.spotlight-input')?.focus()")
-                .ok();
+            // Show and focus the panel on startup
+            show_spotlight(&app.handle());
 
             // Hide dock icon on macOS - do this after window is shown
             #[cfg(target_os = "macos")]
