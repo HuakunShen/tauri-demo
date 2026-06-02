@@ -1,7 +1,7 @@
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager, Runtime,
+    AppHandle, Manager,
 };
 use tauri_nspanel::{tauri_panel, ManagerExt, WebviewWindowExt};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
@@ -24,8 +24,8 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-fn hide_window<R: Runtime>(window: tauri::Window<R>) {
-    let _ = window.hide();
+fn hide_window(app: AppHandle) {
+    hide_spotlight(&app);
 }
 
 fn show_spotlight(app: &AppHandle) {
