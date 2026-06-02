@@ -74,22 +74,15 @@ pub fn run() {
                 tauri_plugin_global_shortcut::Code::KeyH,
             );
 
-            let app_handle = app.handle().clone();
-
             app.global_shortcut()
-                .on_shortcut(shortcut, move |_app, _shortcut, event| {
+                .on_shortcut(shortcut, move |app, _shortcut, event| {
                     if event.state == ShortcutState::Pressed {
-                        let window = app_handle.get_webview_window("main").unwrap();
-                        if window.is_visible().unwrap_or(false) {
-                            let _ = window.hide();
-                        } else {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                            let _ = window.center();
-                            // Focus the input element when showing via shortcut
-                            window
-                                .eval("document.querySelector('.spotlight-input')?.focus()")
-                                .ok();
+                        if let Ok(panel) = app.get_webview_panel("main") {
+                            if panel.is_visible() {
+                                hide_spotlight(&app.app_handle().clone());
+                            } else {
+                                show_spotlight(&app.app_handle().clone());
+                            }
                         }
                     }
                 })?;
@@ -110,14 +103,7 @@ pub fn run() {
                         app.exit(0);
                     }
                     "show" => {
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                            let _ = window.center();
-                            window
-                                .eval("document.querySelector('.spotlight-input')?.focus()")
-                                .ok();
-                        }
+                        show_spotlight(app);
                     }
                     _ => {}
                 })
@@ -128,15 +114,7 @@ pub fn run() {
                         ..
                     } = event
                     {
-                        let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                            let _ = window.center();
-                            window
-                                .eval("document.querySelector('.spotlight-input')?.focus()")
-                                .ok();
-                        }
+                        show_spotlight(tray.app_handle());
                     }
                 })
                 .build(app)?;
